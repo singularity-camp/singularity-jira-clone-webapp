@@ -1,5 +1,9 @@
 import { useReducer } from "react";
+import { useParams } from "react-router-dom";
 import { EditIcon } from "@chakra-ui/icons";
+
+import CardActions from "./components/CardActions";
+import NewCardActions from "./components/NewCardActions";
 
 enum EDIT_TYPE {
   TITLE,
@@ -28,11 +32,15 @@ function reducer(state: typeof initState, action: Action): typeof initState {
 
 const Card = () => {
   const [state, dispatch] = useReducer(reducer, initState);
+  const { cardNumber } = useParams();
+  const isNew = typeof cardNumber === "undefined";
 
   return (
     <div>
       <div>
-        <h1 contentEditable={state.isTitleEditable}>Title</h1>
+        <h1 contentEditable={state.isTitleEditable}>
+          {isNew ? "New" : `Card #${cardNumber}`}
+        </h1>
         <EditIcon onClick={() => dispatch({ type: EDIT_TYPE.TITLE })} />
       </div>
       <div>
@@ -51,6 +59,7 @@ const Card = () => {
           </div>
         </ul>
       </section>
+      {isNew ? <NewCardActions /> : <CardActions />}
     </div>
   );
 };

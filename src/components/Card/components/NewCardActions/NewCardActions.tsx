@@ -1,7 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { FC } from "react";
 import { Button, Stack } from "@chakra-ui/react";
 
-const NewCardActions = () => {
+import { useNavigate } from "react-router-dom";
+
+interface INewCardActions {}
+
+const NewCardActions: FC<INewCardActions> = () => {
   const navigate = useNavigate();
 
   return (
@@ -9,11 +13,7 @@ const NewCardActions = () => {
       <Button colorScheme="pink" variant="solid" onClick={() => navigate("/")}>
         Cancel
       </Button>
-      <Button
-        colorScheme="blue"
-        variant="outline"
-        onClick={() => navigate("/1")}
-      >
+      <Button colorScheme="blue" variant="outline" type="submit">
         Submit
       </Button>
     </Stack>

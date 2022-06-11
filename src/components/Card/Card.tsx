@@ -1,13 +1,11 @@
-import { useReducer, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useReducer } from "react";
 import { EditIcon } from "@chakra-ui/icons";
-
-import style from "./Card.module.css";
 
 import CardActions from "./components/CardActions";
 import NewCardActions from "./components/NewCardActions";
-import { gql, useQuery } from "@apollo/client";
-import { Button, Spinner, useToast } from "@chakra-ui/react";
+import { Spinner, useToast } from "@chakra-ui/react";
+
+import useCards from "./useCards";
 
 enum EDIT_TYPE {
   TITLE,
@@ -17,24 +15,6 @@ enum EDIT_TYPE {
 interface Action {
   type: EDIT_TYPE;
 }
-
-interface Card {
-  title?: string;
-  description?: string;
-}
-
-interface CardsData {
-  cards_by_pk: Card;
-}
-
-const GET_CARD = gql`
-  query GetCard($id: uuid!) {
-    cards_by_pk(id: $id) {
-      title
-      description
-    }
-  }
-`;
 
 const initState = {
   isTitleEditable: false,
@@ -53,22 +33,26 @@ function reducer(state: typeof initState, action: Action): typeof initState {
 }
 
 const Card = () => {
-  const [bg, setBg] = useState(style.green);
   const [state, dispatch] = useReducer(reducer, initState);
-  const { cardNumber } = useParams();
-  const isNew = typeof cardNumber === "undefined";
+  const {
+    isNew,
+    title,
+    setTitle,
+    description,
+    setDescription,
+    error,
+    loading,
+    addHandler,
+    updateHandler,
+    deleteHandler,
+  } = useCards();
 
   const toast = useToast();
-  const { loading, error, data } = useQuery<CardsData>(GET_CARD, {
-    variables: {
-      id: cardNumber,
-    },
-  });
 
   if (error) {
     toast({
       title: "Error card",
-      description: error.message,
+      description: error?.message,
       status: "error",
       duration: 2000,
       isClosable: true,
@@ -81,17 +65,33 @@ const Card = () => {
   }
 
   return (
-    <div className={`${bg} ${style.txtBlue}`}>
+    <form onSubmit={isNew ? addHandler : updateHandler}>
       <div>
-        <h1 contentEditable={state.isTitleEditable}>
-          {isNew ? "New" : data?.cards_by_pk.title}
-        </h1>
+        {state.isTitleEditable ? (
+          <input
+            value={title}
+            onChange={({ target: { value } }) => setTitle(value)}
+            style={{
+              display: "block",
+            }}
+          />
+        ) : (
+          <h1>{title}</h1>
+        )}
         <EditIcon onClick={() => dispatch({ type: EDIT_TYPE.TITLE })} />
       </div>
       <div>
-        <p contentEditable={state.isDescriptionEditable}>
-          {data?.cards_by_pk.description}
-        </p>
+        {state.isDescriptionEditable ? (
+          <input
+            value={description}
+            onChange={({ target: { value } }) => setDescription(value)}
+            style={{
+              display: "block",
+            }}
+          />
+        ) : (
+          <p contentEditable={state.isDescriptionEditable}>{description}</p>
+        )}
         <EditIcon onClick={() => dispatch({ type: EDIT_TYPE.DESCRIPTION })} />
       </div>
       <section>
@@ -106,11 +106,12 @@ const Card = () => {
           </div>
         </ul>
       </section>
-      {isNew ? <NewCardActions /> : <CardActions />}
-      <Button colorScheme="blue" onClick={() => setBg(style.red)}>
-        Set bg
-      </Button>
-    </div>
+      {isNew ? (
+        <NewCardActions />
+      ) : (
+        <CardActions deleteHandler={deleteHandler} />
+      )}
+    </form>
   );
 };
 
